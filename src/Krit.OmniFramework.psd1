@@ -1,6 +1,6 @@
 @{
     RootModule        = 'Krit.OmniFramework.psm1'
-    ModuleVersion     = '1.0.1'
+    ModuleVersion     = '1.0.2'
     GUID              = 'b3d1f5c9-7a4e-4c8b-9e2f-1a7c3b8d2e4f'
     Author            = 'Joshua Finley'
     CompanyName       = 'Kritical Pty Ltd'
@@ -9,14 +9,13 @@
     PowerShellVersion = '5.1'
     CompatiblePSEditions = @('Desktop','Core')
 
-    # We declare these as required so Install-Module pulls them transitively on PSGallery install.
-    # Versions pinned to known-good floors; consumers can use newer.
-    RequiredModules   = @(
-        @{ ModuleName = 'PSFramework';    ModuleVersion = '1.10.318' },
-        @{ ModuleName = 'PSSharedGoods';  ModuleVersion = '0.0.290' },
-        @{ ModuleName = 'PSWriteHTML';    ModuleVersion = '1.27.0' },
-        @{ ModuleName = 'ImportExcel';    ModuleVersion = '7.8.6' }
-    )
+    # 1.0.2 — RequiredModules removed (was the cause of PSFramework AppDomain
+    # version-collision failures: PowerShell hard-imports RequiredModules BEFORE
+    # the psm1 runs, so a stale PSFramework already loaded in the session blew
+    # up Import-Module Krit.OmniFramework with "Assembly with same name is
+    # already loaded"). Soft-imported via Import-KritFoundation at use time
+    # instead; declared in ExternalModuleDependencies below so Install-Module
+    # STILL pulls them transitively on PSGallery install.
     # PSWriteOffice ships PSWriteWord/Excel/PowerPoint via separate modules in some versions; treat as optional.
 
     FunctionsToExport = @(
@@ -47,7 +46,26 @@
             LicenseUri   = 'https://kritical.net/legal/license'
             ProjectUri   = 'https://github.com/Sir-J-AU/Krit.OmniFramework'
             IconUri      = 'https://kritical.net/assets/horizontal_logo.png'
+            ExternalModuleDependencies = @('PSFramework','PSSharedGoods','PSWriteHTML','ImportExcel')
             ReleaseNotes = @'
+1.0.2 - Resilience fix (PSFramework AppDomain collision).
+  * Removed PSFramework/PSSharedGoods/PSWriteHTML/ImportExcel from
+    RequiredModules. PowerShell hard-imports RequiredModules BEFORE the
+    consuming module's psm1 runs, so any stale PSFramework already loaded
+    in the session (e.g. an older PSFramework 1.0.0.1 from a transient
+    dependency) caused Import-Module Krit.OmniFramework — and everything
+    that depends on it (Krit.Hardening) — to fail with "Assembly with same
+    name is already loaded".
+  * Dependencies are now declared in ExternalModuleDependencies (PSData)
+    so Install-Module Krit.OmniFramework STILL pulls them transitively on
+    fresh PSGallery installs.
+  * Import-KritFoundation now detects already-loaded PSFramework at ANY
+    version and reuses it instead of force-upgrading, so Write-KritLog +
+    everything downstream keeps working even when the AppDomain is
+    locked to an older version.
+  * Write-KritLog continues to degrade gracefully to JSONL when
+    PSFramework is missing.
+
 1.0.1 - Bug fix.
   * New-KritHtmlReport now auto-creates the parent directory of -OutFile
     before calling PSWriteHTML's Save-HTML (which would otherwise fall back

@@ -62,6 +62,22 @@ function Import-KritFoundation {
 
     foreach ($mod in $defaultMin.Keys) {
         $needed = [Version]$defaultMin[$mod]
+
+        # 1.0.2 — AppDomain-collision soft-handling. If the module is ALREADY
+        # loaded in this session at ANY version, reuse it. Force-Import to a
+        # different version would fail with "Assembly with same name is
+        # already loaded" on modules like PSFramework that ship their own .NET DLL.
+        $alreadyLoaded = Get-Module -Name $mod -ErrorAction SilentlyContinue
+        if ($alreadyLoaded) {
+            $alreadyLoaded = $alreadyLoaded | Sort-Object Version -Descending | Select-Object -First 1
+            if ($alreadyLoaded.Version -lt $needed) {
+                Add-Row $mod 'LOADED-OLDER' $alreadyLoaded.Version ("session has $($alreadyLoaded.Version); >= $needed preferred but cannot upgrade in-place (restart pwsh to refresh)")
+            } else {
+                Add-Row $mod 'LOADED' $alreadyLoaded.Version 'already loaded in session'
+            }
+            continue
+        }
+
         $have = Get-Module -ListAvailable -Name $mod -ErrorAction SilentlyContinue |
                 Sort-Object Version -Descending | Select-Object -First 1
         if (-not $have -and -not $NoInstall.IsPresent) {
@@ -80,10 +96,18 @@ function Import-KritFoundation {
             continue
         }
         try {
-            Import-Module -Name $mod -MinimumVersion $needed -Force -ErrorAction Stop
+            Import-Module -Name $mod -MinimumVersion $needed -ErrorAction Stop
             Add-Row $mod 'LOADED' $have.Version 'imported'
         } catch {
-            Add-Row $mod 'IMPORT-FAILED' $have.Version $_.Exception.Message
+            # Last-ditch: try without -MinimumVersion in case an older copy is
+            # AppDomain-locked. If it sticks at any version, that's still useful.
+            try {
+                Import-Module -Name $mod -ErrorAction Stop
+                $loadedVer = (Get-Module -Name $mod | Select-Object -First 1).Version
+                Add-Row $mod 'LOADED-FALLBACK' $loadedVer "could not load $needed (AppDomain locked?); using $loadedVer instead"
+            } catch {
+                Add-Row $mod 'IMPORT-FAILED' $have.Version $_.Exception.Message
+            }
         }
     }
 
@@ -106,6 +130,8 @@ function Import-KritFoundation {
     if (-not $Quiet.IsPresent) {
         $results | Format-Table -AutoSize | Out-String | Write-Host
     }
+    # 1.0.2 — LOADED-OLDER + LOADED-FALLBACK count as success (the module is usable
+    # in the session, just at a non-preferred version). Only true failures count.
     $failedRequired = @($results | Where-Object { $_.Status -in @('MISSING','TOO-OLD','INSTALL-FAILED','IMPORT-FAILED') })
     $ok = ($failedRequired.Count -eq 0)
     [pscustomobject]@{
