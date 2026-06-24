@@ -1,0 +1,25 @@
+# Per-run test artefacts (default OutputDir is %LOCALAPPDATA% out-of-repo anyway)
+tests/output/
+
+# Editor / OS
+.vs/
+.vscode/.history/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Backup snapshots
+*.bak
+*.bak.*
+
+# Secrets — never commit
+*.token
+*-secret.txt
+*-secrets.json
+secrets/
+
+# Build artefacts
+out/
+dist/
+*.nupkg
+*.zip

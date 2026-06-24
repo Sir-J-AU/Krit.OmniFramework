@@ -1,0 +1,140 @@
+function Import-KritFoundation {
+    <#
+    .SYNOPSIS
+        Loads the Kritical PowerShell foundation: PSFramework + PSSharedGoods +
+        PSWriteHTML + ImportExcel + optional PSWriteOffice/PSWriteWord/PSWritePDF.
+        Auto-installs missing deps (CurrentUser scope) unless -NoInstall.
+
+    .DESCRIPTION
+        Foundation discipline: every Kritical script that needs logging /
+        reporting / Excel I/O can call `Import-KritFoundation` at the top
+        instead of remembering the half-dozen Install-Module + Import-Module
+        incantations. Returns a status object for the caller.
+
+        Why PSSharedGoods (not psutil): there are TWO competing modules in
+        the PSGallery namespace — Evotec/PSSharedGoods (active, ~290+ utils,
+        Kritical-canonical) and a stale "psutil" sometimes confused with the
+        Python library. We standardise on PSSharedGoods to remove ambiguity.
+
+    .PARAMETER NoInstall
+        Skip Install-Module attempts for missing deps. Useful in CI where
+        the runner has them pre-installed.
+
+    .PARAMETER MinimumVersions
+        Optional hashtable overriding the default minimum-version floors.
+
+    .EXAMPLE
+        Import-KritFoundation
+
+    .EXAMPLE
+        # Quiet mode in a script
+        Import-KritFoundation -NoBanner | Out-Null
+
+    .NOTES
+        Author: Joshua Finley - Kritical Pty Ltd
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [hashtable] $MinimumVersions,
+        [switch]    $NoInstall,
+        [switch]    $NoBanner,
+        [switch]    $Quiet
+    )
+
+    if (-not $NoBanner.IsPresent) { Write-KritBanner -Title 'Import-KritFoundation' -Compact }
+
+    $defaultMin = @{
+        'PSFramework'    = '1.10.318'
+        'PSSharedGoods'  = '0.0.290'
+        'PSWriteHTML'    = '1.27.0'
+        'ImportExcel'    = '7.8.6'
+    }
+    $optionalModules = @('PSWriteOffice','PSWriteWord','PSWritePDF')
+    if ($MinimumVersions) {
+        foreach ($k in $MinimumVersions.Keys) { $defaultMin[$k] = [string]$MinimumVersions[$k] }
+    }
+
+    $results = [System.Collections.Generic.List[pscustomobject]]::new()
+    function Add-Row { param($name,$status,$version,$detail)
+        $results.Add([pscustomobject]@{ Module=$name; Status=$status; Version=$version; Detail=$detail })
+    }
+
+    foreach ($mod in $defaultMin.Keys) {
+        $needed = [Version]$defaultMin[$mod]
+        $have = Get-Module -ListAvailable -Name $mod -ErrorAction SilentlyContinue |
+                Sort-Object Version -Descending | Select-Object -First 1
+        if (-not $have -and -not $NoInstall.IsPresent) {
+            try {
+                if (-not $Quiet.IsPresent) { Write-Host ("Installing $mod (CurrentUser) ...") -ForegroundColor DarkCyan }
+                Install-Module -Name $mod -MinimumVersion $needed -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+                $have = Get-Module -ListAvailable -Name $mod | Sort-Object Version -Descending | Select-Object -First 1
+            } catch {
+                Add-Row $mod 'INSTALL-FAILED' $null $_.Exception.Message
+                continue
+            }
+        }
+        if (-not $have) { Add-Row $mod 'MISSING' $null 'not installed and -NoInstall'; continue }
+        if ($have.Version -lt $needed) {
+            Add-Row $mod 'TOO-OLD' $have.Version "needs >= $needed, have $($have.Version)"
+            continue
+        }
+        try {
+            Import-Module -Name $mod -MinimumVersion $needed -Force -ErrorAction Stop
+            Add-Row $mod 'LOADED' $have.Version 'imported'
+        } catch {
+            Add-Row $mod 'IMPORT-FAILED' $have.Version $_.Exception.Message
+        }
+    }
+
+    # Optional modules — never auto-install, but report presence
+    foreach ($mod in $optionalModules) {
+        $have = Get-Module -ListAvailable -Name $mod -ErrorAction SilentlyContinue |
+                Sort-Object Version -Descending | Select-Object -First 1
+        if ($have) {
+            try {
+                Import-Module -Name $mod -Force -ErrorAction Stop
+                Add-Row $mod 'LOADED-OPTIONAL' $have.Version 'imported (optional)'
+            } catch {
+                Add-Row $mod 'IMPORT-FAILED-OPTIONAL' $have.Version $_.Exception.Message
+            }
+        } else {
+            Add-Row $mod 'NOT-INSTALLED-OPTIONAL' $null 'not installed (optional)'
+        }
+    }
+
+    if (-not $Quiet.IsPresent) {
+        $results | Format-Table -AutoSize | Out-String | Write-Host
+    }
+    $failedRequired = @($results | Where-Object { $_.Status -in @('MISSING','TOO-OLD','INSTALL-FAILED','IMPORT-FAILED') })
+    $ok = ($failedRequired.Count -eq 0)
+    [pscustomobject]@{
+        Ok                = $ok
+        FailedRequired    = $failedRequired.Count
+        Modules           = @($results)
+        Platform          = (Get-KritPlatform)
+        Timestamp         = (Get-Date).ToUniversalTime()
+    }
+}
+
+function Get-KritFoundationStatus {
+    <#
+    .SYNOPSIS
+        Read-only foundation status without installing/loading anything.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param()
+    $names = @('PSFramework','PSSharedGoods','PSWriteHTML','ImportExcel','PSWriteOffice','PSWriteWord','PSWritePDF')
+    $rows = foreach ($n in $names) {
+        $have = Get-Module -ListAvailable -Name $n -ErrorAction SilentlyContinue |
+                Sort-Object Version -Descending | Select-Object -First 1
+        [pscustomobject]@{
+            Module    = $n
+            Installed = [bool]$have
+            Version   = if ($have) { $have.Version } else { $null }
+            Loaded    = [bool](Get-Module -Name $n -ErrorAction SilentlyContinue)
+        }
+    }
+    [pscustomobject]@{ Modules = @($rows); Platform = (Get-KritPlatform) }
+}
