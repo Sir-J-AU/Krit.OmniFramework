@@ -28,6 +28,12 @@ function New-KritHtmlReport {
     $bannerStr = Get-KritBanner -Title $Title
     $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm K')
 
+    # Ensure parent directory exists (PSWriteHTML's Save-HTML does NOT auto-create it; falls back to %TEMP% if missing).
+    $parentDir = Split-Path -Parent $OutFile
+    if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
+
     if (Get-Module -ListAvailable -Name PSWriteHTML) {
         Import-Module PSWriteHTML -Force -ErrorAction Stop
         # PSWriteHTML's New-HTML expects -Content (positional ScriptBlock), not -ScriptBlock.

@@ -1,6 +1,6 @@
 @{
     RootModule        = 'Krit.OmniFramework.psm1'
-    ModuleVersion     = '1.0.0'
+    ModuleVersion     = '1.0.1'
     GUID              = 'b3d1f5c9-7a4e-4c8b-9e2f-1a7c3b8d2e4f'
     Author            = 'Joshua Finley'
     CompanyName       = 'Kritical Pty Ltd'
@@ -48,6 +48,11 @@
             ProjectUri   = 'https://github.com/Sir-J-AU/Krit.OmniFramework'
             IconUri      = 'https://kritical.net/assets/horizontal_logo.png'
             ReleaseNotes = @'
+1.0.1 - Bug fix.
+  * New-KritHtmlReport now auto-creates the parent directory of -OutFile
+    before calling PSWriteHTML's Save-HTML (which would otherwise fall back
+    to %TEMP% and emit a warning).
+
 1.0.0 — Initial release.
   * Multi-OS platform detection (Windows / macOS / Linux + distro + arch + privilege).
   * FHS/LSB-aware tool inventory (Get-KritToolInventory walks every standard path per OS).

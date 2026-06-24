@@ -21,4 +21,11 @@ Describe 'New-KritHtmlReport' {
         (Get-Content -LiteralPath $out -Raw) | Should -Match 'UnitTest'
         $r.Sections | Should -Be 1
     }
+
+    It 'auto-creates the parent directory when OutFile parent does not exist' {
+        $deepOut = Join-Path $script:Tmp ("missing-parent-" + [guid]::NewGuid() + "\sub\rpt.html")
+        $data = @([pscustomobject]@{ X = 1; Y = 2 })
+        { New-KritHtmlReport -Title 'AutoParent' -Section @{ T = $data } -OutFile $deepOut -NoOpen } | Should -Not -Throw
+        Test-Path -LiteralPath $deepOut | Should -BeTrue
+    }
 }

@@ -8,7 +8,8 @@ function Resolve-KritRepoRoot {
     [OutputType([string])]
     param([string] $StartPath = (Get-Location).Path)
     $dir = $StartPath
-    $markers = @('.git','krit-project.json','config/pax8-framework.settings.json','pax8-framework.settings.json','CLAUDE.md')
+    # Repo-root markers — kept brand-neutral (no AI-agent file names).
+    $markers = @('.git','krit-project.json','config/krit-project.json','config/pax8-framework.settings.json','pax8-framework.settings.json','Krit.OmniFramework.psd1')
     for ($i=0; $i -lt 12 -and $dir; $i++) {
         foreach ($m in $markers) {
             if (Test-Path -LiteralPath (Join-Path $dir $m)) { return $dir }
