@@ -1,6 +1,6 @@
 @{
     RootModule        = 'Krit.OmniFramework.psm1'
-    ModuleVersion     = '1.0.2'
+    ModuleVersion     = '1.1.0'
     GUID              = 'b3d1f5c9-7a4e-4c8b-9e2f-1a7c3b8d2e4f'
     Author            = 'Joshua Finley'
     CompanyName       = 'Kritical Pty Ltd'
@@ -34,7 +34,10 @@
         # Config + path resolution (carried forward from Pax8FrameworkConfig)
         'Resolve-KritRepoRoot', 'Get-KritConfig', 'Get-KritProject', 'Get-KritPath',
         # Secrets posture (read-only)
-        'Test-KritSecretsLoaded'
+        'Test-KritSecretsLoaded',
+        # 1.1.0 - Brand pipeline
+        'Get-KritBrandSpec',
+        'New-KritBrandedDocument'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()
@@ -48,6 +51,22 @@
             IconUri      = 'https://kritical.net/assets/horizontal_logo.png'
             ExternalModuleDependencies = @('PSFramework','PSSharedGoods','PSWriteHTML','ImportExcel')
             ReleaseNotes = @'
+1.1.0 - Brand pipeline.
+  * NEW Get-KritBrandSpec - loads canonical brand-spec.json (colours, fonts,
+    corporate identity, contact details, logo paths, template paths) with
+    per-session caching + resolution-order fallbacks. Single source of truth
+    for every Kritical-branded artefact.
+  * NEW New-KritBrandedDocument - renders Markdown (or HTML) source to
+    Kritical-branded PDF / DOCX / HTML in one call. Pulls brand spec from
+    Get-KritBrandSpec. Applies primary #13365C + secondary #15AFD1 + Roboto
+    headings + Assistant body. Inserts Horizontal_Logo.png header + ABN/ACN/
+    address/tagline footer. Optional Outlook email-signature append.
+    Engines: Pandoc + wkhtmltopdf (preferred) / Chrome+Edge headless
+    (fallback). DOCX uses Pandoc --reference-doc against Huzaifa's
+    Kritical-BaseTemplate-CURRENT.docx.
+  * Brand inventory + asset locations documented at
+    Github/KRTPax8ToShopifyConnector/reference/KRITICAL-BRAND-ASSET-INVENTORY-1507.md
+
 1.0.2 - Resilience fix (PSFramework AppDomain collision).
   * Removed PSFramework/PSSharedGoods/PSWriteHTML/ImportExcel from
     RequiredModules. PowerShell hard-imports RequiredModules BEFORE the

@@ -40,5 +40,7 @@ Export-ModuleMember -Function @(
     'Write-KritLog', 'Start-KritLogSession', 'Stop-KritLogSession',
     'New-KritHtmlReport', 'New-KritExcelReport',
     'Resolve-KritRepoRoot', 'Get-KritConfig', 'Get-KritProject', 'Get-KritPath',
-    'Test-KritSecretsLoaded'
+    'Test-KritSecretsLoaded',
+    # 1.1.0 - Brand pipeline
+    'Get-KritBrandSpec', 'New-KritBrandedDocument'
 )
