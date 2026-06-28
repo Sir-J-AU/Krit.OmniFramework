@@ -49,6 +49,7 @@ One `Import-Module` brings up the Kritical PowerShell foundation:
 | **Multi-OS detection** | built-in `Get-KritPlatform` | one PSCustomObject across Windows / macOS / Linux + distro + arch + privilege |
 | **FHS/LSB tool inventory** | built-in `Get-KritToolInventory` | walks every standard search path per OS, reports presence + duplicates |
 | **Branding** | built-in | canonical Kritical banner loaded from `OneDrive\Kritical-Branding\public\KriticalLogo.txt` with bundled fallback |
+| **OneDrive share-link toolkit** *(v1.1.12+)* | Microsoft Graph (delegated user-auth — no API keys) | `New-/Get-/Add-/Set-/Remove-KritOneDriveShareLink*` — mint, audit, add to, modify and revoke OneDrive for Business share permissions from PowerShell. Distribute multi-document packs by share link instead of 10MB email attachment. See [docs/OneDrive-Share-Link-Toolkit.md](docs/OneDrive-Share-Link-Toolkit.md). |
 | **Config + path resolution** | built-in | `Resolve-KritRepoRoot` / `Get-KritConfig` / `Get-KritProject` / `Get-KritPath` |
 | **Secrets posture (read-only)** | built-in | `Test-KritSecretsLoaded` |
 

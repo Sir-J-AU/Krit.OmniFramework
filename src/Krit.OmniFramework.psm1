@@ -42,5 +42,14 @@ Export-ModuleMember -Function @(
     'Resolve-KritRepoRoot', 'Get-KritConfig', 'Get-KritProject', 'Get-KritPath',
     'Test-KritSecretsLoaded',
     # 1.1.0 - Brand pipeline
-    'Get-KritBrandSpec', 'New-KritBrandedDocument'
+    'Get-KritBrandSpec', 'New-KritBrandedDocument',
+    # 1.1.8 - Programmatic markdown linter
+    'Invoke-KritMdLint',
+    # 1.1.12 - OneDrive sharing-link helper (Microsoft Graph delegated auth)
+    'New-KritOneDriveShareLink',
+    # 1.1.13 - OneDrive share-permission management
+    'Get-KritOneDriveShareLinkPermissions',
+    'Add-KritOneDriveShareLinkRecipients',
+    'Remove-KritOneDriveShareLinkPermission',
+    'Set-KritOneDriveShareLinkPermission'
 )

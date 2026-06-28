@@ -23,3 +23,16 @@ out/
 dist/
 *.nupkg
 *.zip
+
+# Customer / engagement / Kritical-internal artefacts — never commit to this public toolkit repo.
+# Pattern enforced so anything authored under one of these prefixes / paths is invisible to git
+# regardless of where it lands inside the working tree.
+**/_KRITICAL-INTERNAL-*
+**/_KRITICAL-INTERNAL-*/
+**/customer-*
+**/aaa-CUSTOMERS/
+**/*-FINAL-SHARED/
+**/*-FINAL-SHARED-*/
+**/Meetings/
+**/EES/
+**/Kitchenworx/

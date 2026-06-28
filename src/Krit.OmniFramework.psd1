@@ -1,6 +1,6 @@
 @{
     RootModule        = 'Krit.OmniFramework.psm1'
-    ModuleVersion     = '1.1.0'
+    ModuleVersion     = '1.1.14'
     GUID              = 'b3d1f5c9-7a4e-4c8b-9e2f-1a7c3b8d2e4f'
     Author            = 'Joshua Finley'
     CompanyName       = 'Kritical Pty Ltd'
@@ -37,7 +37,21 @@
         'Test-KritSecretsLoaded',
         # 1.1.0 - Brand pipeline
         'Get-KritBrandSpec',
-        'New-KritBrandedDocument'
+        'New-KritBrandedDocument',
+        # 1.1.8 - Programmatic markdown linter
+        'Invoke-KritMdLint',
+        # 1.1.12 - OneDrive sharing-link helper (Microsoft Graph delegated auth)
+        # Born from EES proposal-pack distribution 2026-06-28: prefer OneDrive share links
+        # over heavy email attachments for customer-facing pack delivery.
+        'New-KritOneDriveShareLink',
+        # 1.1.13 - OneDrive share-permission management (Get / Add / Remove / Set)
+        # Operator-controlled rotation of who has access to a customer-pack folder:
+        # add recipients without disrupting existing shares, list current grants,
+        # revoke specific recipients, change roles/expiry/password in place.
+        'Get-KritOneDriveShareLinkPermissions',
+        'Add-KritOneDriveShareLinkRecipients',
+        'Remove-KritOneDriveShareLinkPermission',
+        'Set-KritOneDriveShareLinkPermission'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()
